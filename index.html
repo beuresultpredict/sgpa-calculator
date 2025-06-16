@@ -1,177 +1,202 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SGPA Calculator</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BEU Semester Result Prediction</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <style>
     body {
       margin: 0;
+      padding: 0;
       font-family: Arial, sans-serif;
       background-color: #121212;
-      color: #f1f1f1;
+      color: #ffffff;
     }
+
     .container {
-      max-width: 1000px;
-      margin: 40px auto;
+      max-width: 800px;
+      margin: auto;
       padding: 20px;
     }
-    select, input[type="number"] {
-      padding: 8px;
-      margin: 10px;
-      font-size: 1rem;
-    }
-    button {
-      padding: 10px 20px;
-      margin: 10px;
-      font-size: 1rem;
-      cursor: pointer;
-      background-color: #1f1f1f;
-      color: #f1f1f1;
-      border: 1px solid #444;
-      border-radius: 5px;
-    }
-    table {
-      width: 100%;
-      margin-top: 20px;
-      border-collapse: collapse;
-    }
-    table, th, td {
-      border: 1px solid #444;
-    }
-    th, td {
-      padding: 10px;
-      text-align: center;
-    }
+
     h1 {
       text-align: center;
+      color: #00e676;
     }
-    .result {
+
+    select, input {
+      padding: 10px;
+      margin: 10px 0;
+      width: 100%;
+      border: none;
+      border-radius: 5px;
+      font-size: 1em;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 1em;
+      background-color: #00e676;
+      border: none;
+      border-radius: 5px;
+      color: #121212;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
       margin-top: 20px;
-      font-size: 1.2rem;
-      text-align: center;
+    }
+
+    th, td {
+      border: 1px solid #ffffff33;
+      padding: 10px;
+      text-align: left;
+    }
+
+    th {
+      background-color: #1e1e1e;
     }
   </style>
 </head>
+
 <body>
-  <div class="container">
-    <h1>SGPA Calculator</h1>
-    <label for="branch">Branch:</label>
-    <select id="branch">
-      <option value="Mechanical">Mechanical</option>
-    </select>
-    <label for="semester">Semester:</label>
-    <select id="semester">
+  <div class="container" id="result">
+    <h1>BEU Semester Result Prediction</h1>
+
+    <label for="semester">Select Semester:</label>
+    <select id="semester" onchange="loadSubjects()">
+      <option value="">-- Select --</option>
       <option value="1">1st Semester</option>
       <option value="2">2nd Semester</option>
+      <option value="3">3rd Semester</option>
+      <option value="4">4th Semester</option>
+      <option value="5">5th Semester</option>
     </select>
-    <button onclick="generateTable()">Generate</button>
-    <div id="table-container"></div>
-    <div class="result" id="sgpa-result"></div>
+
+    <form id="marksForm"></form>
+    <button onclick="calculateSGPA()">Calculate SGPA</button>
+    <button onclick="downloadPDF()">Download PDF</button>
+
+    <div id="output"></div>
   </div>
 
   <script>
-    const data = {
-      Mechanical: {
-        1: [
-          { subject: "Engineering Chemistry", credit: 3, type: "Theory" },
-          { subject: "Engineering Mathematics-I", credit: 4, type: "Theory" },
-          { subject: "Communicative English", credit: 3, type: "Theory" },
-          { subject: "Sports/Yoga/NCC/NSS", credit: 1, type: "Practical" },
-          { subject: "Engineering Graphics and Design", credit: 1, type: "Theory" },
-          { subject: "Basic Electrical Engineering", credit: 3, type: "Theory" },
-          { subject: "Engineering Chemistry Lab", credit: 1, type: "Practical" },
-          { subject: "Communicative English Lab", credit: 1, type: "Practical" },
-          { subject: "Engineering Graphics and Design Lab", credit: 2, type: "Practical" },
-          { subject: "Basic Electrical Engineering Lab", credit: 1, type: "Practical" },
-        ],
-        2: [
-          { subject: "Engineering Physics", credit: 3, type: "Theory" },
-          { subject: "Engineering Mathematics-II", credit: 4, type: "Theory" },
-          { subject: "Programming for Problem Solving", credit: 3, type: "Theory" },
-          { subject: "Swachha Bharat Mission (SBM)", credit: 1, type: "Practical" },
-          { subject: "Workshop Practices", credit: 2, type: "Practical" },
-          { subject: "Elements of Mechanical Engineering", credit: 3, type: "Theory" },
-          { subject: "Engineering Physics Lab", credit: 1, type: "Practical" },
-          { subject: "Programming for Problem Solving Lab", credit: 1, type: "Practical" },
-          { subject: "Workshop Practices Lab", credit: 1, type: "Practical" },
-          { subject: "Elements of Mechanical Engineering Lab", credit: 1, type: "Practical" },
-        ]
-      }
+    const subjects = {
+      1: [
+        ["Engineering Chemistry", 3],
+        ["Engineering Mathematics-I", 4],
+        ["Communicative English", 3],
+        ["Engineering Graphics and Design", 1],
+        ["Basic Electrical Engineering", 3],
+        ["Sports/Yoga/NCC/NSS", 1, true],
+        ["Engineering Chemistry Lab", 1, true],
+        ["Communicative English Lab", 1, true],
+        ["Engineering Graphics and Design Lab", 2, true],
+        ["Basic Electrical Engineering Lab", 1, true],
+      ],
+      2: [
+        ["Engineering Physics", 3],
+        ["Engineering Mathematics-II", 4],
+        ["Programming for Problem Solving", 3],
+        ["Swachha Bharat Mission", 1, true],
+        ["Workshop Practices", 2],
+        ["Elements of Mechanical Engineering", 3],
+        ["Engineering Physics Lab", 1, true],
+        ["Programming for Problem Solving Lab", 1, true],
+        ["Workshop Practices Lab", 1, true],
+        ["Elements of Mechanical Engineering Lab", 1, true],
+      ],
+      3: [
+        ["BIOLOGY FOR ENGINEERS", 3],
+        ["BASIC ELECTRONICS ENGINEERING", 4],
+        ["ENGINEERING MECHANICS", 3],
+        ["MATHEMATICS-III (PDE, PROBABILILTY AND STATISTICS)", 4],
+        ["THERMODYNAMICS", 4],
+        ["ENGINEERING MECHANICS LAB", 1, true],
+        ["Internship", 4],
+        ["Machine Drawing", 2, true],
+      ],
+      4: [
+        ["Applied Thermodynamics", 4],
+        ["Engineering Materials", 4],
+        ["Fluid Mechanics", 3],
+        ["Instrumentation & Control", 4],
+        ["Strength of Materials", 3],
+        ["MOOCs / SWAYAM / NPTEL Courses - 1", 2],
+        ["Fluid Mechanics LAB", 1.5, true],
+        ["Strength of Materials LAB", 1.5, true],
+      ],
+      5: [
+        ["Fluid Machinery", 3],
+        ["Heat Transfer", 3],
+        ["Kinematics of Machine", 4],
+        ["Manufacturing Processes", 3],
+        ["Summer Entrepreneurship – II", 6],
+        ["MOOCs / SWAYAM / NPTEL Courses – 2", 2],
+        ["Fluid Machinery Lab", 1.5, true],
+        ["Heat Transfer Lab", 1.5, true],
+        ["Manufacturing Processes Lab", 1.5, true],
+      ],
     };
 
-    function generateTable() {
-      const branch = document.getElementById("branch").value;
-      const semester = document.getElementById("semester").value;
-      const subjects = data[branch][semester];
+    const getGradePoint = (marks, isPractical = false) => {
+      const scale = isPractical ? 50 : 100;
+      const percent = (marks / scale) * 100;
+      if (percent >= 90) return 10;
+      if (percent >= 80) return 9;
+      if (percent >= 70) return 8;
+      if (percent >= 60) return 7;
+      if (percent >= 50) return 6;
+      if (percent >= 45) return 5;
+      if (percent >= 40) return 4;
+      return 0;
+    };
 
-      let html = `
-        <table>
-          <thead>
-            <tr>
-              <th>S No</th>
-              <th>Subject</th>
-              <th>Credit</th>
-              <th>Type</th>
-              <th>Marks</th>
-            </tr>
-          </thead>
-          <tbody>
-      `;
-      subjects.forEach((subj, index) => {
-        html += `
-          <tr>
-            <td>${index + 1}</td>
-            <td>${subj.subject}</td>
-            <td>${subj.credit}</td>
-            <td>${subj.type}</td>
-            <td><input type="number" min="0" max="100" data-credit="${subj.credit}" data-type="${subj.type}" /></td>
-          </tr>
-        `;
+    function loadSubjects() {
+      const sem = document.getElementById("semester").value;
+      const form = document.getElementById("marksForm");
+      form.innerHTML = "";
+      if (!subjects[sem]) return;
+      subjects[sem].forEach((subj, i) => {
+        const [name, credit, isPractical] = subj;
+        const label = document.createElement("label");
+        label.textContent = `${i + 1}. ${name} (Credit: ${credit})${isPractical ? ' [Practical]' : ''}`;
+        const input = document.createElement("input");
+        input.type = "number";
+        input.name = `marks${i}`;
+        input.placeholder = `Enter marks out of ${isPractical ? 50 : 100}`;
+        form.appendChild(label);
+        form.appendChild(input);
       });
-      html += `</tbody></table><button onclick="calculateSGPA()">Calculate SGPA</button>`;
-
-      document.getElementById("table-container").innerHTML = html;
-      document.getElementById("sgpa-result").innerText = "";
     }
 
     function calculateSGPA() {
-      const inputs = document.querySelectorAll("input[type='number']");
-      let totalCredit = 0;
-      let weightedSum = 0;
-      inputs.forEach(input => {
-        const marks = parseFloat(input.value);
-        if (!isNaN(marks)) {
-          const credit = parseInt(input.dataset.credit);
-          const type = input.dataset.type;
-          const gradePoint = (type === "Theory") ? getTheoryGrade(marks) : getPracticalGrade(marks);
-          weightedSum += gradePoint * credit;
-          totalCredit += credit;
-        }
+      const sem = document.getElementById("semester").value;
+      const form = document.getElementById("marksForm");
+      const inputs = form.querySelectorAll("input");
+      let totalCredits = 0, totalPoints = 0;
+      subjects[sem].forEach((subj, i) => {
+        const [name, credit, isPractical] = subj;
+        const marks = parseFloat(inputs[i].value);
+        if (isNaN(marks)) return;
+        const gp = getGradePoint(marks, isPractical);
+        totalPoints += gp * credit;
+        totalCredits += credit;
       });
-      const sgpa = (totalCredit > 0) ? (weightedSum / totalCredit).toFixed(2) : 0;
-      document.getElementById("sgpa-result").innerText = `Your SGPA: ${sgpa}`;
+      const sgpa = totalCredits ? (totalPoints / totalCredits).toFixed(2) : "N/A";
+      document.getElementById("output").innerHTML = `<h3>Predicted SGPA: ${sgpa}</h3>`;
     }
 
-    function getTheoryGrade(marks) {
-      if (marks >= 90) return 10;
-      if (marks >= 80) return 9;
-      if (marks >= 70) return 8;
-      if (marks >= 60) return 7;
-      if (marks >= 50) return 6;
-      if (marks >= 40) return 5;
-      return 0;
-    }
-
-    function getPracticalGrade(marks) {
-      if (marks >= 45) return 10;
-      if (marks >= 40) return 9;
-      if (marks >= 35) return 8;
-      if (marks >= 30) return 7;
-      if (marks >= 25) return 6;
-      if (marks >= 20) return 5;
-      return 0;
+    function downloadPDF() {
+      const element = document.getElementById("result");
+      html2pdf().from(element).save("BEU_SGPA_Result.pdf");
     }
   </script>
 </body>
+
 </html>
