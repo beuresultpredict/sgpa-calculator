@@ -194,7 +194,7 @@
       });
 
       const sgpa = (weightedPoints / totalCredits).toFixed(2);
-      document.getElementById("sgpaResult").innerHTML = Your SGPA is: <strong>${sgpa}</strong>;
+      document.getElementById("sgpaResult").innerHTML = `Your SGPA is: <strong>${sgpa}</strong>`;
     }
 
     function downloadPDF() {
@@ -212,7 +212,7 @@
       inputs.forEach((input, index) => {
         const label = input.previousElementSibling.innerText;
         const marks = input.value || "N/A";
-        doc.text(${index + 1}. ${label} - Marks: ${marks}, 20, y);
+        doc.text(`${index + 1}. ${label} - Marks: ${marks}`, 20, y);
         y += 10;
       });
 
